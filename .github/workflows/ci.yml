@@ -20,8 +20,6 @@ jobs:
       - name: Create Draft Release
         uses: actions/github-script@v6
         id: release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
             const ref = context.ref.split("/")[2]
@@ -57,6 +55,14 @@ jobs:
                   }))
                 }
                 
+                const release_notes = (await github.rest.repos.generateReleaseNotes({
+                  owner: context.payload.repository.owner.login,
+                  repo: context.payload.repository.name,
+                  tag_name: version,
+                  previous_tag_name: latest_release,
+                  target_commitish: ref,
+                }))
+                
                 const footer = `
                   ## Resources
                   - Documentation -- https://github.com/dhurley/github-actions-playground#readme
@@ -68,11 +74,12 @@ jobs:
                   tag_name: version,
                   target_commitish: ref,
                   name: version,
-                  body: footer,
+                  body: release_notes.data.body + footer,
                   draft: true,
                 }))
                 
                 console.log(`Release created: ${release.data.html_url}`)
                 console.log(`Release ID: ${release.data.id}`)
+                console.log(`Release notes: ${release_notes.data.body}`)
                 console.log(`Release Upload URL: ${release.data.upload_url}`)
             }
