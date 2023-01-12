@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Echo Stuff
+        run: |
+          echo "${{github.ref}}"
+          echo "${{github.ref_name}}"
+          echo "${{github.ref_type}}"
+      - uses: actions/setup-node@v3
+      - run: npm install semver
+      - name: Create Draft Release
+        uses: actions/github-script@v6
+        id: release
+        with:
+          script: |
+            const semver = require('semver');
+            const version = "v1.0.0"
+            console.log(`The release version is ${version}`)
+            
+            const releases = (await github.rest.repos.listReleases({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              per_page: 100,
+            })).data
+            
+            const latest_release = (await github.rest.repos.getLatestRelease({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+            })).data.tag_name
+            
+            console.log(`The latest release was ${latest_release}`)
+
+            if (latest_release === version) {
+                core.setFailed(`A published release already exists for ${latest_release}`)
+            } else {
+                const draft = releases.find((r) => r.draft && r.tag_name === version)
+                const draft_found = !(draft === undefined)
+                
+                let release
+                if (draft_found){
+                  console.log("Draft release already exists. Deleting current draft release and recreating it")
+                  release = (await github.rest.repos.deleteRelease({
+                      owner: context.payload.repository.owner.login,
+                      repo: context.payload.repository.name,
+                      release_id: draft.id,
+                  }))
+                }
+                
+                const release_notes = (await github.rest.repos.generateReleaseNotes({
+                  owner: context.payload.repository.owner.login,
+                  repo: context.payload.repository.name,
+                  tag_name: version,
+                  previous_tag_name: latest_release,
+                  target_commitish: ref,
+                }))
+                
+                const footer = `
+                ## Resources
+                - Documentation -- https://github.com/dhurley/github-actions-playground#readme
+                `
+                
+                release = (await github.rest.repos.createRelease({
+                  owner: context.payload.repository.owner.login,
+                  repo: context.payload.repository.name,
+                  tag_name: version,
+                  target_commitish: ref,
+                  name: version,
+                  body: release_notes.data.body + footer,
+                  draft: true,
+                }))
+                
+                console.log(`Release created: ${release.data.html_url}`)
+                console.log(`Release ID: ${release.data.id}`)
+                console.log(`Release notes: ${release_notes.data.body}`)
+                console.log(`Release Upload URL: ${release.data.upload_url}`)
+            }
