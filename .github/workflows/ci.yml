@@ -64,8 +64,8 @@ jobs:
                 }))
                 
                 const footer = `
-                  ## Resources
-                  - Documentation -- https://github.com/dhurley/github-actions-playground#readme
+                ## Resources
+                - Documentation -- https://github.com/dhurley/github-actions-playground#readme
                 `
                 
                 release = (await github.rest.repos.createRelease({
