@@ -24,7 +24,7 @@ jobs:
         with:
           script: |
             const semver = require('semver');
-            const version = "v1.0.0"
+            const version = "v1.0.1"
             console.log(`The release version is ${version}`)
             
             const releases = (await github.rest.repos.listReleases({
