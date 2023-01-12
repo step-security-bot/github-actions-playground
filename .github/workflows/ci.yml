@@ -17,13 +17,12 @@ jobs:
           echo "${{github.ref_name}}"
           echo "${{github.ref_type}}"
       - uses: actions/setup-node@v3
-      - run: npm install semver
       - name: Create Draft Release
         uses: actions/github-script@v6
         id: release
         with:
           script: |
-            const semver = require('semver');
+            const ref = context.ref.split("/")[2]
             const version = "v1.0.1"
             console.log(`The release version is ${version}`)
             
@@ -65,8 +64,8 @@ jobs:
                 }))
                 
                 const footer = `
-                ## Resources
-                - Documentation -- https://github.com/dhurley/github-actions-playground#readme
+                  ## Resources
+                  - Documentation -- https://github.com/dhurley/github-actions-playground#readme
                 `
                 
                 release = (await github.rest.repos.createRelease({
