@@ -99,4 +99,4 @@ jobs:
         run: |
           zip test.zip README.md
           gh release upload --clobber ${{env.VERSION}} \
-            $(find ./build -type f \( -name "*.zip" \))
+            $(find ./ -type f \( -name "*.zip" \))
