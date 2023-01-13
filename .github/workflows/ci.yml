@@ -82,4 +82,21 @@ jobs:
                 console.log(`Release ID: ${release.data.id}`)
                 console.log(`Release notes: ${release_notes.data.body}`)
                 console.log(`Release Upload URL: ${release.data.upload_url}`)
+
+                return {
+                  version: version,
+                  release_id: release.data.id,
+                  release_upload_url: release.data.upload_url,
+                }
             }
+      - name: Set Environment Variables
+        run: |
+          echo "${{steps.release.outputs.result}}"
+          echo "VERSION=$(echo '${{steps.release.outputs.result}}' | jq -r '.version')" >> $GITHUB_ENV
+          echo "RELEASE_ID=$(echo '${{steps.release.outputs.result}}' | jq -r '.release_id')" >> $GITHUB_ENV
+          echo "RELEASE_UPLOAD_URL=$(echo '${{steps.release.outputs.result}}' | jq -r '.release_upload_url')" >> $GITHUB_ENV
+      - name: Upload Release Assets
+        run: |
+          zip test.zip README.md
+          gh release upload --clobber ${{env.VERSION}} \
+            $(find ./build -type f \( -name "*.zip" \))
