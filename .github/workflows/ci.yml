@@ -23,6 +23,8 @@ jobs:
           echo "${{github.ref}}"
           echo "${{github.ref_name}}"
           echo "${{github.ref_type}}"
+          echo "${{ github.base_ref }}"
+          echo "${{ github.event.pull_request.base.ref }}"
       - uses: actions/setup-node@v3
       - name: Create Draft Release
         uses: actions/github-script@v6
