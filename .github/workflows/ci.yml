@@ -2,6 +2,13 @@ name: CI
 
 on:
   push:
+    branches:
+    - '**'
+  pull_request:
+    types: 
+    - opened
+    - reopened
+    - synchronize
 
 jobs:
   test:
@@ -63,18 +70,13 @@ jobs:
                   target_commitish: ref,
                 }))
                 
-                const footer = `
-                  ## Resources
-                  - Documentation -- https://github.com/dhurley/github-actions-playground#readme
-                `
-                
                 release = (await github.rest.repos.createRelease({
                   owner: context.payload.repository.owner.login,
                   repo: context.payload.repository.name,
                   tag_name: version,
                   target_commitish: ref,
                   name: version,
-                  body: release_notes.data.body + footer,
+                  body: release_notes.data.body,
                   draft: true,
                 }))
                 
