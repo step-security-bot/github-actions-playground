@@ -21,15 +21,31 @@ jobs:
           fetch-depth: 0
       - name: Echo Stuff
         run: |
-          echo "${{github.ref}}"
-          echo "${{github.ref_name}}"
-          echo "${{github.ref_type}}"
+          echo "${{ github.ref }}"
+          echo "${{ github.ref_name }}"
+          echo "${{ github.ref_type }}"
           echo "${{ github.base_ref }}"
           echo "${{ github.head_ref }}"
           echo "${{ github.event.pull_request.base.ref }}"
+          echo "${{ github.event.pull_request.head.repo.full_name }}"
+          echo "${{ github.repository }}"
+          echo "${{ github.event.pull_request.head.repo.fork }}"
+      - name: Is a fork
+        if: "github.event.pull_request.head.repo.fork"
+        run: |
+          echo "This is a fork"
+      - name: Is not a fork
+        if: "!github.event.pull_request.head.repo.fork"
+        run: |
+          echo "This is not a fork"
+      - name: Is not a fork and not branch name release
+        if: ${{ !startsWith(github.ref_name, 'release-') && !github.event.pull_request.head.repo.fork }}
+        run: |
+          echo "This is not a fork & not a release branch"
       - uses: actions/setup-node@v3
       - name: Create Draft Release
         uses: actions/github-script@v6
+        if: "!github.event.pull_request.head.repo.fork"
         id: release
         with:
           script: |
@@ -96,12 +112,14 @@ jobs:
                 }
             }
       - name: Set Environment Variables
+        if: "!github.event.pull_request.head.repo.fork"
         run: |
           echo "${{steps.release.outputs.result}}"
           echo "VERSION=$(echo '${{steps.release.outputs.result}}' | jq -r '.version')" >> $GITHUB_ENV
           echo "RELEASE_ID=$(echo '${{steps.release.outputs.result}}' | jq -r '.release_id')" >> $GITHUB_ENV
           echo "RELEASE_UPLOAD_URL=$(echo '${{steps.release.outputs.result}}' | jq -r '.release_upload_url')" >> $GITHUB_ENV
       - name: Upload Release Assets
+        if: "!github.event.pull_request.head.repo.fork"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
